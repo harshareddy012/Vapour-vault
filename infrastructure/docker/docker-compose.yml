@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: dfs_sss_postgres
+    environment:
+      POSTGRES_DB: dfs_sss
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+    container_name: dfs_sss_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  coordinator:
+    build:
+      context: ../../
+      dockerfile: apps/coordinator/Dockerfile
+    container_name: dfs_sss_coordinator
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/dfs_sss
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  storage-node-1:
+    build:
+      context: ../../
+      dockerfile: apps/storage-node/Dockerfile
+    container_name: dfs_sss_storage_node_1
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      NODE_NAME: node-1
+      STORAGE_DIR: /storage_data/node-1
+
+  storage-node-2:
+    build:
+      context: ../../
+      dockerfile: apps/storage-node/Dockerfile
+    container_name: dfs_sss_storage_node_2
+    ports:
+      - "5002:5002"
+    environment:
+      PORT: 5002
+      NODE_NAME: node-2
+      STORAGE_DIR: /storage_data/node-2
+
+  storage-node-3:
+    build:
+      context: ../../
+      dockerfile: apps/storage-node/Dockerfile
+    container_name: dfs_sss_storage_node_3
+    ports:
+      - "5003:5003"
+    environment:
+      PORT: 5003
+      NODE_NAME: node-3
+      STORAGE_DIR: /storage_data/node-3
+
+  storage-node-4:
+    build:
+      context: ../../
+      dockerfile: apps/storage-node/Dockerfile
+    container_name: dfs_sss_storage_node_4
+    ports:
+      - "5004:5004"
+    environment:
+      PORT: 5004
+      NODE_NAME: node-4
+      STORAGE_DIR: /storage_data/node-4
+
+  storage-node-5:
+    build:
+      context: ../../
+      dockerfile: apps/storage-node/Dockerfile
+    container_name: dfs_sss_storage_node_5
+    ports:
+      - "5005:5005"
+    environment:
+      PORT: 5005
+      NODE_NAME: node-5
+      STORAGE_DIR: /storage_data/node-5
+
+volumes:
+  postgres_data:
+  minio_data:

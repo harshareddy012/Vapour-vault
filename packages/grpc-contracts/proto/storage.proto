@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package dfs.storage;
+
+service StorageNodeService {
+  rpc StoreChunk (StoreChunkRequest) returns (StoreChunkResponse);
+  rpc RetrieveChunk (RetrieveChunkRequest) returns (RetrieveChunkResponse);
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message StoreChunkRequest {
+  string file_id = 1;
+  string chunk_key = 2;
+  bytes chunk_data = 3;
+  string checksum_sha256 = 4;
+}
+
+message StoreChunkResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RetrieveChunkRequest {
+  string file_id = 1;
+  string chunk_key = 2;
+}
+
+message RetrieveChunkResponse {
+  bytes chunk_data = 1;
+  string checksum_sha256 = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool is_healthy = 1;
+  int64 available_bytes = 2;
+}
