@@ -21,9 +21,10 @@ export class FileController {
         req.file.originalname,
         req.file.mimetype,
         req.file.buffer,
-        k,
-        n
+        // kThreshold and nShares will be forwarded once the SSS ticket
+        // restores those parameters to processUpload.
       );
+
 
       res.status(201).json(result);
     } catch (error: any) {
