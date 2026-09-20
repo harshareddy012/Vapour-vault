@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import { authRoutes } from './routes/authRoutes.js';
 import { fileRoutes } from './routes/fileRoutes.js';
 import { nodeRoutes } from './routes/nodeRoutes.js';
 import { simulatorRoutes } from './routes/simulatorRoutes.js';
@@ -20,6 +21,7 @@ app.get('/health', (req, res) => {
 });
 
 // Register Modular API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/nodes', nodeRoutes);
 app.use('/api/simulator', simulatorRoutes);

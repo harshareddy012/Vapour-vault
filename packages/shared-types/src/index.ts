@@ -64,6 +64,18 @@ export interface NodeHealthRecord {
   checkedAt: string;
 }
 
+export type FileStatus = 'UPLOADED' | 'ENCRYPTED' | 'DISTRIBUTED' | 'STORED' | 'FAILED';
+
+export interface FileRecord {
+  fileId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  status: FileStatus;
+  ownerId: string;
+  createdAt: string;
+}
+
 export interface UploadFileRequest {
   filename: string;
   mimeType: string;
@@ -74,11 +86,10 @@ export interface UploadFileRequest {
 export interface UploadFileResponse {
   fileId: string;
   filename: string;
-  kThreshold: number;
-  nShares: number;
-  sharesDistributed: number;
-  chunksDistributed: number;
-  checksumSha256: string;
+  kThreshold?: number;
+  nShares?: number;
+  sharesDistributed?: number;
+  chunksDistributed?: number;
   message: string;
 }
 
@@ -105,3 +116,32 @@ export interface ScenarioTestResult {
   actualSuccess: boolean;
   message: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  passwordHash: string;
+  createdAt: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  userId: string;
+  email: string;
+}
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+}
+

@@ -188,6 +188,18 @@ splitSecret()
 combineSecret()
 
 The rest of the project must never directly call secrets.js.
+## Library Policy
+
+Whenever a mature, battle-tested library exists for a problem that is not the learning objective of this project, prefer using the library behind an abstraction rather than implementing the algorithm manually.
+
+Examples:
+
+- Shamir Secret Sharing → secrets.js-grempe
+- Password Hashing → bcrypt
+- JWT → jsonwebtoken
+- Logging → Pino
+
+The objective is to learn distributed systems architecture, not to reimplement well-established libraries.
 
 ---
 

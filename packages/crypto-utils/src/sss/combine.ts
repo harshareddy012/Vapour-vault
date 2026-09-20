@@ -1,33 +1,18 @@
 import { SecretShare } from '@dfs-sss/shared-types';
-
-// Precomputed GF(2^8) tables
-const EXP = new Uint8Array(512);
-const LOG = new Uint8Array(256);
-
-(function initGF256() {
-  let x = 1;
-  for (let i = 0; i < 255; i++) {
-    EXP[i] = x;
-    EXP[i + 255] = x;
-    LOG[x] = i;
-    x = (x << 1) ^ (x & 0x80 ? 0x11b : 0);
-  }
-})();
-
-function gfMult(a: number, b: number): number {
-  if (a === 0 || b === 0) return 0;
-  return EXP[LOG[a] + LOG[b]];
-}
-
-function gfDiv(a: number, b: number): number {
-  if (b === 0) throw new Error('Division by zero in GF(2^8).');
-  if (a === 0) return 0;
-  return EXP[LOG[a] + 255 - LOG[b]];
-}
+import { gfMult, gfDiv } from './gf256.js';
 
 /**
- * Reconstructs secret key buffer using Lagrange Interpolation over GF(2^8) at x=0.
- * f(0) = \sum_{i=0}^{K-1} y_i \prod_{j \ne i} \frac{x_j}{x_j \oplus x_i}
+ * Reconstructs the secret key buffer from K or more secret shares using
+ * Lagrange Interpolation over GF(2^8) evaluated at x = 0.
+ *
+ * Formula for each byte position:
+ *   f(0) = XOR over i of { y_i * PRODUCT over j≠i of { x_j / (x_j XOR x_i) } }
+ *
+ * This is the standard Lagrange basis polynomial evaluated at 0, where all
+ * arithmetic is in GF(2^8) (XOR for addition, EXP/LOG tables for multiplication).
+ *
+ * Fewer than K shares produce an incorrect (but indistinguishable) result —
+ * the information-theoretic guarantee of Shamir Secret Sharing.
  */
 export function combineShares(shares: SecretShare[]): Buffer {
   if (!shares || shares.length === 0) {
@@ -49,15 +34,14 @@ export function combineShares(shares: SecretShare[]): Buffer {
       const xi = parsedShares[i].x;
       const yi = parsedShares[i].bytes[byteIdx];
 
-      // Compute Lagrange basis polynomial L_i(0)
+      // Compute Lagrange basis polynomial L_i(0) in GF(2^8):
+      //   L_i(0) = PRODUCT over j≠i of { x_j / (x_i XOR x_j) }
+      // because evaluating at 0: (0 - x_j) = x_j in GF(2^8) (negation is identity).
       let li = 1;
       for (let j = 0; j < parsedShares.length; j++) {
         if (i === j) continue;
         const xj = parsedShares[j].x;
-        // L_i(0) = \prod (0 - x_j) / (x_i - x_j) = \prod x_j / (x_i \oplus x_j)
-        const numerator = xj;
-        const denominator = xi ^ xj;
-        li = gfMult(li, gfDiv(numerator, denominator));
+        li = gfMult(li, gfDiv(xj, xi ^ xj));
       }
 
       secretByte ^= gfMult(yi, li);
