@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { uploadService } from '../services/upload/uploadService.js';
+import { fileOrchestrator } from '../services/orchestrator/fileOrchestrator.js';
 import { reconstructionService } from '../services/reconstruction/reconstructionService.js';
 import { fileRepository } from '../repositories/fileRepository.js';
 import { createServiceLogger } from '@dfs-sss/logger';
@@ -17,21 +17,12 @@ export class FileController {
       const ownerId = req.user.userId;
       const file = req.file!;
 
-      const result = await uploadService.processUpload(
-<<<<<<< HEAD
+      const result = await fileOrchestrator.handleUpload(
         file.originalname,
         file.mimetype,
         file.buffer,
-        ownerId
-=======
-        req.file.originalname,
-        req.file.mimetype,
-        req.file.buffer,
-        // kThreshold and nShares will be forwarded once the SSS ticket
-        // restores those parameters to processUpload.
->>>>>>> be934f08dd1a02cc75e815a189f58e8d87ee49af
+        ownerId,
       );
-
 
       res.status(201).json(result);
     } catch (error: any) {
