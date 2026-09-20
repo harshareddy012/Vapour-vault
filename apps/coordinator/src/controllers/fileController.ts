@@ -18,11 +18,20 @@ export class FileController {
       const file = req.file!;
 
       const result = await uploadService.processUpload(
+<<<<<<< HEAD
         file.originalname,
         file.mimetype,
         file.buffer,
         ownerId
+=======
+        req.file.originalname,
+        req.file.mimetype,
+        req.file.buffer,
+        // kThreshold and nShares will be forwarded once the SSS ticket
+        // restores those parameters to processUpload.
+>>>>>>> be934f08dd1a02cc75e815a189f58e8d87ee49af
       );
+
 
       res.status(201).json(result);
     } catch (error: any) {

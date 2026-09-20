@@ -12,6 +12,20 @@ export interface EncryptionResult {
   originalKeyHex?: string; // used internally before zeroing
 }
 
+/**
+ * Result of the pure AES-256-GCM encryption step.
+ * No SSS fields — those belong to EncryptionResult (used by the SSS ticket).
+ *
+ * keyHex is temporary in-memory key material. It must never be persisted,
+ * logged, or returned via HTTP response.
+ */
+export interface EncryptionLayerResult {
+  encryptedPayload: Buffer;
+  iv: string;      // hex — 12 bytes → 24 hex chars
+  authTag: string; // hex — 16 bytes → 32 hex chars
+  keyHex: string;  // hex — 32 bytes → 64 hex chars (temporary, in-memory only)
+}
+
 export interface FileMetadata {
   id: string;
   filename: string;
@@ -20,10 +34,13 @@ export interface FileMetadata {
   encryptionAlgo: string;
   authTag: string;
   iv: string;
-  kThreshold: number;
-  nShares: number;
   createdAt: string;
-  checksumSha256: string;
+  /** Populated by the SSS ticket. Absent until then. */
+  kThreshold?: number;
+  /** Populated by the SSS ticket. Absent until then. */
+  nShares?: number;
+  /** Populated by the integrity/storage ticket. Absent until then. */
+  checksumSha256?: string;
 }
 
 export interface EncryptedChunkMeta {
@@ -86,11 +103,24 @@ export interface UploadFileRequest {
 export interface UploadFileResponse {
   fileId: string;
   filename: string;
+<<<<<<< HEAD
   kThreshold?: number;
   nShares?: number;
   sharesDistributed?: number;
   chunksDistributed?: number;
+=======
+>>>>>>> be934f08dd1a02cc75e815a189f58e8d87ee49af
   message: string;
+  /** Populated by the SSS ticket. */
+  kThreshold?: number;
+  /** Populated by the SSS ticket. */
+  nShares?: number;
+  /** Populated by the distribution ticket. */
+  sharesDistributed?: number;
+  /** Populated by the distribution ticket. */
+  chunksDistributed?: number;
+  /** Populated by the integrity/storage ticket. */
+  checksumSha256?: string;
 }
 
 export interface ReconstructFileResponse {
