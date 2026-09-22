@@ -103,13 +103,6 @@ export interface UploadFileRequest {
 export interface UploadFileResponse {
   fileId: string;
   filename: string;
-<<<<<<< HEAD
-  kThreshold?: number;
-  nShares?: number;
-  sharesDistributed?: number;
-  chunksDistributed?: number;
-=======
->>>>>>> be934f08dd1a02cc75e815a189f58e8d87ee49af
   message: string;
   /** Populated by the SSS ticket. */
   kThreshold?: number;
