@@ -1,33 +1,63 @@
 import path from 'path';
-import { MinIOProvider } from '@dfs-sss/storage-sdk';
-import { calculateSHA256 } from '@dfs-sss/crypto-utils';
+import { LocalFileProvider } from '@dfs-sss/storage-sdk';
 import { createServiceLogger } from '@dfs-sss/logger';
 
 const logger = createServiceLogger('StorageManager');
 
+/**
+ * StorageManager
+ *
+ * Single-responsibility wrapper over LocalFileProvider.
+ * Handles the fileId/chunkId → disk path mapping and logs
+ * every operation with structured metadata for observability.
+ *
+ * Storage layout on disk:
+ *   <storageDir>/<fileId>/<chunkId>.bin
+ */
 export class StorageManager {
-  private provider: MinIOProvider;
-  private nodeName: string;
+  private readonly provider: LocalFileProvider;
+  private readonly nodeName: string;
+  private readonly storageDir: string;
 
   constructor(nodeName: string, storageDir: string) {
     this.nodeName = nodeName;
-    this.provider = new MinIOProvider(storageDir);
+    this.storageDir = path.resolve(storageDir);
+    this.provider = new LocalFileProvider(this.storageDir);
   }
 
-  async saveChunk(fileId: string, chunkKey: string, data: Buffer): Promise<{ checksum: string; path: string }> {
-    const checksum = calculateSHA256(data);
-    const savedPath = await this.provider.storeChunk(fileId, chunkKey, data);
-    logger.info({ node: this.nodeName, fileId, chunkKey, checksum }, 'Chunk saved successfully');
-    return { checksum, path: savedPath };
+  /**
+   * Persist a raw binary chunk to disk.
+   * Returns the absolute path where the data was written.
+   */
+  async saveChunk(fileId: string, chunkId: string, data: Buffer): Promise<{ path: string }> {
+    const savedPath = await this.provider.storeChunk(fileId, chunkId, data);
+
+    logger.info(
+      { node: this.nodeName, fileId, chunkId, storagePath: savedPath, bytes: data.length },
+      'Chunk saved to disk',
+    );
+
+    return { path: savedPath };
   }
 
-  async readChunk(fileId: string, chunkKey: string): Promise<Buffer> {
-    const data = await this.provider.getChunk(fileId, chunkKey);
-    logger.info({ node: this.nodeName, fileId, chunkKey, bytes: data.length }, 'Chunk read successfully');
+  /**
+   * Read a previously stored chunk from disk.
+   */
+  async readChunk(fileId: string, chunkId: string): Promise<Buffer> {
+    const data = await this.provider.getChunk(fileId, chunkId);
+
+    logger.info(
+      { node: this.nodeName, fileId, chunkId, bytes: data.length },
+      'Chunk read from disk',
+    );
+
     return data;
   }
 
+  /**
+   * Verify the storage directory is writable.
+   */
   async isHealthy(): Promise<boolean> {
-    return await this.provider.healthCheck();
+    return this.provider.healthCheck();
   }
 }
