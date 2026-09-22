@@ -168,7 +168,11 @@ importers:
     dependencies:
       pnpm:
         specifier: ^11.22.0
+<<<<<<< HEAD
         version: 11.27.0
+=======
+        version: 11.22.0
+>>>>>>> f46d97650bf2d3b08beede00411e9195e9eb3196
     devDependencies:
       typescript:
         specifier: ^5.3.3
