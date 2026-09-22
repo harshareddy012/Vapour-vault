@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { uploadService } from '../services/upload/uploadService.js';
+import { fileOrchestrator } from '../services/orchestrator/fileOrchestrator.js';
 import { reconstructionService } from '../services/reconstruction/reconstructionService.js';
 import { fileRepository } from '../repositories/fileRepository.js';
 import { createServiceLogger } from '@dfs-sss/logger';
@@ -9,22 +9,20 @@ const logger = createServiceLogger('FileController');
 export class FileController {
   async uploadFile(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.file) {
-        res.status(400).json({ error: 'No file uploaded in form payload.' });
+      if (!req.user?.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const k = parseInt(req.body.kThreshold || '3', 10);
-      const n = parseInt(req.body.nShares || '5', 10);
+      const ownerId = req.user.userId;
+      const file = req.file!;
 
-      const result = await uploadService.processUpload(
-        req.file.originalname,
-        req.file.mimetype,
-        req.file.buffer,
-        // kThreshold and nShares will be forwarded once the SSS ticket
-        // restores those parameters to processUpload.
+      const result = await fileOrchestrator.handleUpload(
+        file.originalname,
+        file.mimetype,
+        file.buffer,
+        ownerId,
       );
-
 
       res.status(201).json(result);
     } catch (error: any) {
@@ -34,20 +32,21 @@ export class FileController {
   }
 
   listFiles(req: Request, res: Response): void {
-    const files = fileRepository.getAllFiles();
-    res.json({ files, total: files.length });
+    const fileRecords = fileRepository.getAllFileRecords();
+    res.json({ fileRecords, total: fileRecords.length });
   }
 
   getFileMetadata(req: Request, res: Response): void {
     const { id } = req.params;
-    const file = fileRepository.getFile(id);
-    if (!file) {
+
+    const fileRecord = fileRepository.getFileRecord(id);
+
+    if (!fileRecord) {
       res.status(404).json({ error: 'File not found.' });
       return;
     }
-    const chunks = fileRepository.getChunks(id);
-    const shares = fileRepository.getShares(id);
-    res.json({ file, chunks, shares });
+
+    res.json({ fileRecord });
   }
 
   async downloadFile(req: Request, res: Response): Promise<void> {

@@ -42,6 +42,11 @@ export class ReconstructionService {
     }
 
     // 2. Query healthy nodes to collect at least K secret key shares
+    const kThreshold = fileMeta.kThreshold;
+    if (!kThreshold) {
+      throw new Error(`File ${fileId} has no SSS threshold configured. Key splitting may not have been performed.`);
+    }
+
     const collectedShares: SecretShare[] = [];
     for (const shareMeta of shareMetas) {
       const node = nodeRepository.getNodeById(shareMeta.storageNodeId);
@@ -64,13 +69,13 @@ export class ReconstructionService {
         logger.warn({ error: err.message, node: node.name }, 'Failed share retrieval from storage node');
       }
 
-      if (collectedShares.length >= fileMeta.kThreshold) {
+      if (collectedShares.length >= kThreshold) {
         break; // Reached K threshold!
       }
     }
 
-    if (collectedShares.length < fileMeta.kThreshold) {
-      throw new Error(`Insufficient shares available: ${collectedShares.length}/${fileMeta.kThreshold} required to reconstruct file.`);
+    if (collectedShares.length < kThreshold) {
+      throw new Error(`Insufficient shares available: ${collectedShares.length}/${kThreshold} required to reconstruct file.`);
     }
 
     // 3. Reconstruct AES key via Lagrange Interpolation & decrypt payload
