@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/server.ts",
+    "run:nodes": "node scripts/run-nodes.js",
     "start": "node dist/server.js"
   },
   "dependencies": {
