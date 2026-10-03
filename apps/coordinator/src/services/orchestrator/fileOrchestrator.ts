@@ -90,6 +90,22 @@ export class FileOrchestrator {
     fileRepository.saveChunks(fileId, chunkMetas);
     fileRepository.saveShares(fileId, shareMetas);
 
+    // Persist FileMetadata so the download pipeline can retrieve iv and authTag
+    // for decryption. These values are never logged or exposed via HTTP —
+    // they are stored only in-process and used exclusively for reconstruction.
+    fileRepository.saveFile({
+      id: fileId,
+      filename,
+      mimeType,
+      sizeBytes: fileBuffer.length,
+      encryptionAlgo: 'AES-256-GCM',
+      iv: encryptionResult.iv,
+      authTag: encryptionResult.authTag,
+      createdAt: fileRecord.createdAt,
+      kThreshold: K_THRESHOLD,
+      nShares: N_SHARES,
+    });
+
     logger.info(
       {
         fileId,

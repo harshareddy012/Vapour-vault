@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { fileOrchestrator } from '../services/orchestrator/fileOrchestrator.js';
-import { reconstructionService } from '../services/reconstruction/reconstructionService.js';
+import { downloadService } from '../services/download/downloadService.js';
 import { fileRepository } from '../repositories/fileRepository.js';
 import { createServiceLogger } from '@dfs-sss/logger';
 
@@ -53,11 +53,12 @@ export class FileController {
     try {
       const { id } = req.params;
       const startTime = Date.now();
-      const result = await reconstructionService.reconstructFile(id);
+      const result = await downloadService.downloadFile(id);
       const durationMs = Date.now() - startTime;
 
       res.setHeader('Content-Type', result.mimeType);
       res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.setHeader('Content-Length', result.data.length.toString());
       res.setHeader('X-Reconstruction-Shares', result.sharesRetrieved.toString());
       res.setHeader('X-Reconstruction-Time-Ms', durationMs.toString());
 
