@@ -78,6 +78,42 @@ app.post('/store', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /retrieve
+//
+// Query params:
+//   ?fileId=xxx&chunkId=yyy
+//
+// Reads:
+//   <STORAGE_DIR>/<fileId>/<chunkId>.bin
+//
+// Response:
+//   { data: string (base64) }
+// ---------------------------------------------------------------------------
+app.get('/retrieve', async (req: Request, res: Response) => {
+  const { fileId, chunkId } = req.query as { fileId?: string; chunkId?: string };
+
+  if (!fileId || !chunkId) {
+    res.status(400).json({ error: 'fileId and chunkId query parameters are required.' });
+    return;
+  }
+
+  try {
+    const buffer = await storageManager.readChunk(fileId, chunkId);
+
+    logger.info(
+      { node: NODE_NAME, fileId, chunkId, bytes: buffer.length },
+      'Chunk retrieved successfully via GET /retrieve',
+    );
+
+    res.json({ data: buffer.toString('base64') });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ node: NODE_NAME, fileId, chunkId, error: message }, 'Failed to retrieve chunk');
+    res.status(404).json({ error: message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
 app.listen(PORT, () => {
