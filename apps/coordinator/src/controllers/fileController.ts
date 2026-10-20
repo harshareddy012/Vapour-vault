@@ -31,17 +31,24 @@ export class FileController {
     }
   }
 
-  listFiles(req: Request, res: Response): void {
-    const fileRecords = fileRepository.getAllFileRecords();
+  async listFiles(req: Request, res: Response): Promise<void> {
+    const ownerId = req.user?.userId;
+    if (!ownerId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const allRecords = await fileRepository.getAllFileRecords();
+    const fileRecords = allRecords.filter((file) => file.ownerId === ownerId);
     res.json({ fileRecords, total: fileRecords.length });
   }
 
-  getFileMetadata(req: Request, res: Response): void {
+  async getFileMetadata(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
 
-    const fileRecord = fileRepository.getFileRecord(id);
+    const fileRecord = await fileRepository.getFileRecord(id);
 
-    if (!fileRecord) {
+    if (!fileRecord || fileRecord.ownerId !== req.user?.userId) {
       res.status(404).json({ error: 'File not found.' });
       return;
     }
@@ -52,6 +59,12 @@ export class FileController {
   async downloadFile(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const fileRecord = await fileRepository.getFileRecord(id);
+      if (!fileRecord || fileRecord.ownerId !== req.user?.userId) {
+        res.status(404).json({ error: 'File not found.' });
+        return;
+      }
+
       const startTime = Date.now();
       const result = await downloadService.downloadFile(id);
       const durationMs = Date.now() - startTime;

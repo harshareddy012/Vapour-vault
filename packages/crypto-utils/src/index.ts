@@ -5,3 +5,5 @@ export { decryptAES } from './aes/decrypt.js';
 export { splitSecret } from './sss/split.js';
 export { combineShares } from './sss/combine.js';
 export { calculateSHA256 } from './hash/sha256.js';
+export { encodeErasure, decodeErasure, type ErasureShard } from './erasure/index.js';
+

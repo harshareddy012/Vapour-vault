@@ -22,8 +22,9 @@ export const LOG = new Uint8Array(256);
     EXP[i] = x;
     EXP[i + 255] = x; // duplicate to avoid mod 255 in gfMult
     LOG[x] = i;
-    // Multiply by generator 0x03 in GF(2^8): x = x * 0x03 mod P(x)
-    x = (x << 1) ^ (x & 0x80 ? 0x11b : 0);
+    // Multiply by generator 0x03 in GF(2^8): x * 3 = x * 2 XOR x.
+    const doubled = (x << 1) ^ (x & 0x80 ? 0x11b : 0);
+    x = doubled ^ x;
   }
 })();
 

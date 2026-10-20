@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import path from 'path';
 import { StorageManager } from './storageManager.js';
 import { createServiceLogger } from '@dfs-sss/logger';
 
@@ -8,7 +9,7 @@ import { createServiceLogger } from '@dfs-sss/logger';
 // ---------------------------------------------------------------------------
 const PORT = parseInt(process.env.PORT ?? '5001', 10);
 const NODE_NAME = process.env.NODE_NAME ?? `node-${PORT}`;
-const STORAGE_DIR = process.env.STORAGE_DIR ?? `./storage`;
+const STORAGE_DIR = process.env.STORAGE_DIR ?? path.join('./storage', NODE_NAME);
 
 const logger = createServiceLogger(NODE_NAME);
 const storageManager = new StorageManager(NODE_NAME, STORAGE_DIR);

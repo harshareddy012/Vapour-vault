@@ -5,13 +5,15 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "vitest run src/"
   },
   "dependencies": {
     "@dfs-sss/shared-types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^5.0.5"
   }
 }

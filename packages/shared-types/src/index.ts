@@ -41,6 +41,9 @@ export interface FileMetadata {
   nShares?: number;
   /** Populated by the integrity/storage ticket. Absent until then. */
   checksumSha256?: string;
+  cipherSizeBytes?: number;
+  ownerId?: string;
+  status?: FileStatus;
 }
 
 export interface EncryptedChunkMeta {

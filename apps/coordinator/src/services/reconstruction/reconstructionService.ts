@@ -11,11 +11,11 @@ export class ReconstructionService {
    * Reconstructs and decrypts a file using K shares from healthy nodes.
    */
   async reconstructFile(fileId: string): Promise<{ filename: string; mimeType: string; data: Buffer; sharesRetrieved: number }> {
-    const fileMeta = fileRepository.getFile(fileId);
+    const fileMeta = await fileRepository.getFile(fileId);
     if (!fileMeta) throw new Error(`File ${fileId} not found in metadata registry.`);
 
-    const chunkMetas = fileRepository.getChunks(fileId);
-    const shareMetas = fileRepository.getShares(fileId);
+    const chunkMetas = await fileRepository.getChunks(fileId);
+    const shareMetas = await fileRepository.getShares(fileId);
 
     if (chunkMetas.length === 0) throw new Error(`No storage chunk mappings found for file ${fileId}.`);
 

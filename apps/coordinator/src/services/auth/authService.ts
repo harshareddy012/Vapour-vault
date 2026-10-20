@@ -8,10 +8,10 @@ import { createServiceLogger } from '@dfs-sss/logger';
 
 const logger = createServiceLogger('AuthService');
 const BCRYPT_SALT_ROUNDS = 12;
-const JWT_EXPIRES_IN = '24h';
+const JWT_EXPIRES_IN = '30d';
 
 export class AuthService {
-  constructor(private userRepo: UserRepository = defaultUserRepository) {}
+  constructor(private userRepo: UserRepository = defaultUserRepository) { }
 
   async register(req: RegisterRequest): Promise<AuthResponse> {
     const { email, password } = req;

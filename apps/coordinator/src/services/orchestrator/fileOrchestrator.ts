@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { UploadFileResponse } from '@dfs-sss/shared-types';
-import { splitSecret } from '@dfs-sss/crypto-utils';
+import { calculateSHA256, encodeErasure } from '@dfs-sss/crypto-utils';
 import { uploadService } from '../upload/uploadService.js';
 import { encryptionService } from '../encryption/encryptionService.js';
 import { distributionService } from '../distribution/distributionService.js';
@@ -17,18 +17,22 @@ const N_SHARES = 5;
  * FileOrchestrator owns the upload pipeline and coordinates services
  * that each have a single responsibility:
  *
- *   1. UploadService      → create and persist the FileRecord
- *   2. EncryptionService  → AES-256-GCM encrypt + SSS key split (K-of-N)
- *   3. DistributionService → send encrypted payload + shares to storage nodes
+ *   1. UploadService       → create and persist the FileRecord
+ *   2. EncryptionService   → AES-256-GCM encrypt + SSS key split (K-of-N)
+ *   3. Erasure Coding      → encode ciphertext into 5 shards (3-of-5 threshold)
+ *   4. DistributionService → send 1 data shard and 1 key share per storage node
+ *   5. FileRepository      → persist placement metadata to database
  */
 export class FileOrchestrator {
   /**
    * Full upload pipeline:
    *   generate fileId
    *   → persist FileRecord
-   *   → AES-256-GCM encrypt + SSS split key (K-of-N)
-   *   → distribute encrypted payload + shares to storage nodes
-   *   → persist chunk/share metadata
+   *   → AES-256-GCM encrypt fileBuffer
+   *   → SSS split AES key into 5 shares
+   *   → erasure encode ciphertext into 5 shards
+   *   → distribute 1 shard + 1 share to each storage node
+   *   → persist chunk/share/file metadata to database
    *   → return success response
    */
   async handleUpload(
@@ -38,14 +42,15 @@ export class FileOrchestrator {
     ownerId: string,
   ): Promise<UploadFileResponse> {
     const fileId = `file-${randomUUID()}`;
+    const plaintextChecksum = calculateSHA256(fileBuffer);
 
     logger.info(
-      { fileId, filename, sizeBytes: fileBuffer.length, ownerId },
+      { fileId, filename, sizeBytes: fileBuffer.length, ownerId, checksumSha256: plaintextChecksum },
       'Upload pipeline started',
     );
 
     // ── Step 1: Persist FileRecord (status: UPLOADED) ──────────────
-    const fileRecord = uploadService.createFileRecord(
+    const fileRecord = await uploadService.createFileRecord(
       fileId,
       filename,
       mimeType,
@@ -72,7 +77,23 @@ export class FileOrchestrator {
       'Encryption and SSS key split complete',
     );
 
-    // ── Step 3: Distribute encrypted payload + shares to storage nodes ──
+    // ── Step 3: Erasure code ciphertext into 5 shards (3-of-5 recovery) ──
+    const dataShards = encodeErasure(
+      encryptionResult.encryptedPayload,
+      K_THRESHOLD,
+      N_SHARES,
+    );
+
+    logger.info(
+      {
+        fileId,
+        shardsCount: dataShards.length,
+        shardSizeBytes: dataShards[0].data.length,
+      },
+      'Ciphertext erasure encoding complete',
+    );
+
+    // ── Step 4: Distribute data shards and key shares to storage nodes ──
     const healthyNodes = nodeRepository.getHealthyNodes();
     if (healthyNodes.length < K_THRESHOLD) {
       throw new Error(
@@ -82,29 +103,33 @@ export class FileOrchestrator {
 
     const { chunkMetas, shareMetas } = await distributionService.distributePayloadAndShares(
       fileId,
-      encryptionResult.encryptedPayload,
+      dataShards,
       encryptionResult.keyShares,
       healthyNodes,
+      K_THRESHOLD,
     );
 
-    // ── Step 4: Persist distribution metadata ──────────────────────
-    fileRepository.saveChunks(fileId, chunkMetas);
-    fileRepository.saveShares(fileId, shareMetas);
+    // ── Step 5: Persist distribution metadata to database ──────────
+    await fileRepository.saveChunks(fileId, chunkMetas);
+    await fileRepository.saveShares(fileId, shareMetas);
 
-    // Persist FileMetadata so the download pipeline can retrieve iv and authTag
-    // for decryption. These values are never logged or exposed via HTTP —
-    // they are stored only in-process and used exclusively for reconstruction.
-    fileRepository.saveFile({
+    // Persist FileMetadata so the download pipeline can retrieve iv, authTag,
+    // and cipherSizeBytes for reconstruction.
+    await fileRepository.saveFile({
       id: fileId,
       filename,
       mimeType,
       sizeBytes: fileBuffer.length,
+      cipherSizeBytes: encryptionResult.encryptedPayload.length,
       encryptionAlgo: 'AES-256-GCM',
       iv: encryptionResult.iv,
       authTag: encryptionResult.authTag,
       createdAt: fileRecord.createdAt,
       kThreshold: K_THRESHOLD,
       nShares: N_SHARES,
+      checksumSha256: plaintextChecksum,
+      ownerId,
+      status: 'DISTRIBUTED',
     });
 
     logger.info(
@@ -125,6 +150,7 @@ export class FileOrchestrator {
       kThreshold: K_THRESHOLD,
       sharesDistributed: shareMetas.length,
       chunksDistributed: chunkMetas.length,
+      checksumSha256: plaintextChecksum,
     };
   }
 }

@@ -15,10 +15,12 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 
-// Health Check
-app.get('/health', (req, res) => {
+// Health Check (available at both root and /api for reverse proxy compatibility)
+const healthHandler = (_req: express.Request, res: express.Response) => {
   res.json({ status: 'ACTIVE', service: 'DFS_SSS Coordinator', timestamp: new Date().toISOString() });
-});
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Register Modular API Routes
 app.use('/api/auth', authRoutes);

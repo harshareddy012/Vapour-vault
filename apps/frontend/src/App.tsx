@@ -30,14 +30,17 @@ interface FileItem {
   filename: string;
   mimeType: string;
   sizeBytes: number;
-  kThreshold: number;
-  nShares: number;
   createdAt: string;
 }
 
 export default function App() {
   const [kThreshold, setKThreshold] = useState<number>(3);
   const [nShares, setNShares] = useState<number>(5);
+  const [authToken, setAuthToken] = useState<string>(() => localStorage.getItem('vapour-vault-token') ?? '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
@@ -56,13 +59,13 @@ export default function App() {
     message: string;
   } | null>(null);
 
-  // Fetch Nodes & Files on Mount
+  // Fetch public node status on mount and the owner's files after authentication.
   useEffect(() => {
     fetchNodes();
     fetchFiles();
     const interval = setInterval(fetchNodes, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [authToken]);
 
   const fetchNodes = async () => {
     try {
@@ -92,13 +95,51 @@ export default function App() {
 
   const fetchFiles = async () => {
     try {
-      const res = await fetch('/api/files');
+      const res = await fetch('/api/files', {
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       if (res.ok) {
         const data = await res.json();
-        setFiles(data.files || []);
+        setFiles((data.fileRecords || []).map((record: {
+          fileId: string;
+          filename: string;
+          mimeType: string;
+          sizeBytes: number;
+          createdAt: string;
+        }) => ({
+          id: record.fileId,
+          filename: record.filename,
+          mimeType: record.mimeType,
+          sizeBytes: record.sizeBytes,
+          createdAt: record.createdAt,
+        })));
       }
     } catch {
       // Ignore
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+
+    try {
+      const res = await fetch(isRegistering ? '/api/auth/register' : '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await res.json();
+      if (!res.ok || typeof result.token !== 'string') {
+        setAuthError(result.error || 'Sign-in failed.');
+        return;
+      }
+
+      localStorage.setItem('vapour-vault-token', result.token);
+      setAuthToken(result.token);
+      setPassword('');
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'Sign-in request failed.');
     }
   };
 
@@ -132,6 +173,7 @@ export default function App() {
     try {
       const res = await fetch('/api/files/upload', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
         body: formData,
       });
 
@@ -152,16 +194,21 @@ export default function App() {
 
   const handleDownloadFile = async (fileId: string, filename: string) => {
     try {
-      const res = await fetch(`/api/files/${fileId}/download`);
+      const res = await fetch(`/api/files/${fileId}/download`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       if (res.ok) {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename;
+        const disposition = res.headers.get('Content-Disposition');
+        const serverFilename = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
+        a.download = serverFilename || filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
+        window.URL.revokeObjectURL(url);
       } else {
         const errData = await res.json();
         alert(`Download Failed: ${errData.error}`);
@@ -207,7 +254,9 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/files/${files[0].id}/download`);
+      const res = await fetch(`/api/files/${files[0].id}/download`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       if (res.ok) {
         setScenarioResult({
           title: 'Scenario 1: K=3, N=5 (Node 2 & Node 5 Offline)',
@@ -255,7 +304,9 @@ export default function App() {
     }
 
     try {
-      const res = await fetch(`/api/files/${files[0].id}/download`);
+      const res = await fetch(`/api/files/${files[0].id}/download`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       if (res.ok) {
         setScenarioResult({ title: 'Scenario 2 Test', success: true, message: 'Unexpected success.' });
       } else {
@@ -270,6 +321,38 @@ export default function App() {
       setScenarioResult({ title: 'Scenario 2 Test', success: false, message: err.message });
     }
   };
+
+  if (!authToken) {
+    return (
+          <div style={{ maxWidth: '420px', margin: '10vh auto', padding: '24px' }} className="glass-card">
+            <h1 className="gradient-text" style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Vapour Vault</h1>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>Sign in to upload and retrieve your files.</p>
+            <form onSubmit={handleLogin} style={{ display: 'grid', gap: '12px' }}>
+              <input
+                type="email"
+                autoComplete="username"
+                required
+                placeholder="Email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                placeholder="Password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              {authError && <p role="alert" style={{ color: 'var(--accent-rose)' }}>{authError}</p>}
+              <button className="btn-primary" type="submit">{isRegistering ? 'Create account' : 'Sign in'}</button>
+              <button type="button" className="btn-primary" onClick={() => setIsRegistering((value) => !value)}>
+                {isRegistering ? 'Use existing account' : 'Create an account'}
+              </button>
+            </form>
+          </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 20px' }}>
@@ -542,7 +625,7 @@ export default function App() {
                     </td>
                     <td style={{ padding: '12px' }}>
                       <span className="mono" style={{ color: 'var(--accent-purple)', fontSize: '0.8rem' }}>
-                        AES-256 + SSS ({file.kThreshold}/{file.nShares})
+                        AES-256-GCM + SSS
                       </span>
                     </td>
                     <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>

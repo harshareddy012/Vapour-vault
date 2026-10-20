@@ -68,7 +68,7 @@ process.on('SIGTERM', () => shutdown(0));
 console.log('==================================================');
 console.log('Starting 5 local storage nodes:');
 nodes.forEach(({ name, port }) => {
-  console.log(`  - [${name}] http://localhost:${port} (storage: ./storage)`);
+  console.log(`  - [${name}] http://localhost:${port} (storage: ./storage/${name})`);
 });
 console.log('Press Ctrl+C to stop all nodes.');
 console.log('==================================================\n');
@@ -80,7 +80,7 @@ for (const node of nodes) {
       ...process.env,
       PORT: String(node.port),
       NODE_NAME: node.name,
-      STORAGE_DIR: './storage',
+      STORAGE_DIR: path.join('./storage', node.name),
     },
     shell: isWindows,
   });

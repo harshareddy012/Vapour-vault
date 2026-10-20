@@ -13,13 +13,13 @@ export class UploadService {
    * no distribution, no SSS. Those belong to the orchestrator and
    * subsequent pipeline stages respectively.
    */
-  createFileRecord(
+  async createFileRecord(
     fileId: string,
     filename: string,
     mimeType: string,
     sizeBytes: number,
     ownerId: string,
-  ): FileRecord {
+  ): Promise<FileRecord> {
     const fileRecord: FileRecord = {
       fileId,
       filename,
@@ -30,7 +30,7 @@ export class UploadService {
       createdAt: new Date().toISOString(),
     };
 
-    fileRepository.saveFileRecord(fileRecord);
+    await fileRepository.saveFileRecord(fileRecord);
 
     logger.info(
       { fileId, filename, status: fileRecord.status },
