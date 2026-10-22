@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AuthScreen } from './components/AuthScreen';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inline — no external package change needed)
@@ -1080,76 +1081,18 @@ export default function App() {
   // ── Pre-auth screen ──────────────────────────────────────────────────────────
   if (!authToken) {
     return (
-      <div className="vv-auth-wrapper">
-        <div className="vv-auth-card">
-          <p className="vv-auth-wordmark">Vapour Vault</p>
-          <p className="vv-auth-tagline">
-            Split the secret. Survive the outage. Verify every byte.
-          </p>
-
-          <form onSubmit={handleLogin} className="vv-auth-form" noValidate>
-            <div>
-              <label className="vv-label" htmlFor="vv-email" style={{ display: 'block', marginBottom: 5 }}>
-                Email
-              </label>
-              <input
-                id="vv-email"
-                className="vv-input"
-                type="email"
-                autoComplete="username"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={(ev) => setEmail(ev.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="vv-label" htmlFor="vv-password" style={{ display: 'block', marginBottom: 5 }}>
-                Password
-              </label>
-              <input
-                id="vv-password"
-                className="vv-input"
-                type="password"
-                autoComplete={isRegistering ? 'new-password' : 'current-password'}
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(ev) => setPassword(ev.target.value)}
-              />
-            </div>
-
-            {authError && (
-              <div className="vv-msg vv-msg--err" role="alert">
-                {authError}
-              </div>
-            )}
-
-            {authLoading && <BinaryLoader label="Authenticating…" />}
-
-            <button
-              id="vv-auth-submit"
-              type="submit"
-              className="vv-btn vv-btn--primary"
-              disabled={authLoading}
-              style={{ marginTop: 4 }}
-            >
-              {isRegistering ? 'Create account' : 'Sign in'}
-            </button>
-
-            <button
-              id="vv-auth-switch"
-              type="button"
-              className="vv-btn"
-              disabled={authLoading}
-              onClick={() => { setIsRegistering((v) => !v); setAuthError(''); }}
-            >
-              {isRegistering ? 'Use existing account' : 'Create an account'}
-            </button>
-          </form>
-        </div>
-      </div>
+      <AuthScreen
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        isRegistering={isRegistering}
+        setIsRegistering={setIsRegistering}
+        authLoading={authLoading}
+        authError={authError}
+        setAuthError={setAuthError}
+        onSubmit={handleLogin}
+      />
     );
   }
 
