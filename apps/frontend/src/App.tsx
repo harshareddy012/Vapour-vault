@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthScreen } from './components/AuthScreen';
 import { Dashboard } from './pages/Dashboard';
+import { UploadSection } from './pages/UploadSection';
+import { FilesSection } from './pages/FilesSection';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inline — no external package change needed)
@@ -24,6 +26,8 @@ interface FileItem {
   mimeType: string;
   sizeBytes: number;
   createdAt: string;
+  status?: string;
+  checksumSha256?: string;
 }
 
 type Section =
@@ -871,6 +875,7 @@ export default function App() {
   // ── Global data ─────────────────────────────────────────────────────────────
   const [nodes, setNodes] = useState<StorageNode[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [isFilesLoading, setIsFilesLoading] = useState(false);
 
   // ── Data fetchers ───────────────────────────────────────────────────────────
   const fetchNodes = useCallback(async () => {
@@ -897,6 +902,7 @@ export default function App() {
 
   const fetchFiles = useCallback(async () => {
     if (!authToken) return;
+    setIsFilesLoading(true);
     try {
       const res = await fetch('/api/files', {
         headers: { Authorization: `Bearer ${authToken}` },
@@ -907,16 +913,22 @@ export default function App() {
           (data.fileRecords || []).map((r: {
             fileId: string; filename: string; mimeType: string;
             sizeBytes: number; createdAt: string;
+            status?: string; checksumSha256?: string;
           }) => ({
             id: r.fileId,
             filename: r.filename,
             mimeType: r.mimeType,
             sizeBytes: r.sizeBytes,
             createdAt: r.createdAt,
+            status: r.status,
+            checksumSha256: r.checksumSha256,
           })),
         );
       }
     } catch { /* silently ignore */ }
+    finally {
+      setIsFilesLoading(false);
+    }
   }, [authToken]);
 
   // ── Polling ─────────────────────────────────────────────────────────────────
@@ -1004,17 +1016,20 @@ export default function App() {
         );
       case 'upload':
         return (
-          <SectionUpload
+          <UploadSection
             authToken={authToken}
+            nodes={nodes}
             onUploadSuccess={fetchFiles}
           />
         );
       case 'files':
         return (
-          <SectionFiles
+          <FilesSection
             authToken={authToken}
             files={files}
+            isLoading={isFilesLoading}
             onRefresh={fetchFiles}
+            onNavigate={(section) => setActiveSection(section as Section)}
           />
         );
       case 'nodes':

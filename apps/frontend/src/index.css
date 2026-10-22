@@ -1572,3 +1572,1123 @@ input[type="range"]::-webkit-slider-thumb {
 .vv-text-amber  { color: var(--vv-amber); }
 .vv-text-muted  { color: var(--vv-muted); }
 .vv-text-code   { color: var(--vv-code); font-family: var(--vv-font-mono); font-size: 0.9em; }
+
+/* ==========================================================================
+   Phase 4 — Upload + Encryption Process + Shard Distribution
+   ========================================================================== */
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.vv-upload-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .vv-upload-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-upload-left {
+  min-width: 0;
+}
+
+.vv-upload-right {
+  min-width: 0;
+}
+
+/* ── Drop zone ──────────────────────────────────────────────────── */
+.vv-upload-dropzone {
+  border: 1px dashed var(--vv-border-strong);
+  border-radius: var(--vv-radius);
+  background: var(--vv-surface-1);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.vv-upload-dropzone:hover,
+.vv-upload-dropzone:focus-visible {
+  border-color: var(--vv-green);
+  background: var(--vv-surface-2);
+}
+
+.vv-upload-dropzone:focus-visible {
+  outline: 2px solid var(--vv-green);
+  outline-offset: 2px;
+}
+
+.vv-upload-dropzone--hover {
+  border-color: var(--vv-green) !important;
+  background: var(--vv-green-dim) !important;
+}
+
+.vv-upload-dropzone--has-file {
+  border-style: solid;
+  border-color: #244d37;
+  background: var(--vv-surface-2);
+  text-align: left;
+  padding: 16px 20px;
+}
+
+.vv-upload-dropzone__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.vv-upload-dropzone__icon {
+  font-size: 28px;
+  color: var(--vv-green);
+  font-family: var(--vv-font-mono);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.vv-upload-dropzone__title {
+  font-family: var(--vv-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.vv-upload-dropzone__sub {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-muted);
+}
+
+.vv-upload-dropzone__selected {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vv-upload-dropzone__file-icon {
+  font-size: 24px;
+  color: var(--vv-green);
+  font-family: var(--vv-font-mono);
+  flex-shrink: 0;
+}
+
+.vv-upload-dropzone__file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vv-upload-dropzone__filename {
+  font-family: var(--vv-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vv-text);
+  word-break: break-all;
+}
+
+.vv-upload-dropzone__filedetail {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-muted);
+}
+
+/* ── SHA-256 hash panel ─────────────────────────────────────────── */
+.vv-upload-hash-panel {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 12px 14px;
+}
+
+.vv-upload-hash-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.vv-upload-hash-panel__value {
+  display: block;
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-code);
+  word-break: break-all;
+  line-height: 1.6;
+  padding: 6px 8px;
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+}
+
+/* ── Encryption scheme strip ────────────────────────────────────── */
+.vv-upload-scheme {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  overflow: hidden;
+}
+
+.vv-upload-scheme__item {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--vv-surface-1);
+  border-right: 1px solid var(--vv-border);
+}
+
+.vv-upload-scheme__item:last-child {
+  border-right: none;
+}
+
+.vv-upload-scheme__k {
+  font-family: var(--vv-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vv-dim);
+}
+
+.vv-upload-scheme__v {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-code);
+  font-weight: 500;
+}
+
+/* ── Submit button ──────────────────────────────────────────────── */
+.vv-upload-submit {
+  width: 100%;
+  height: 42px;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vv-upload-submit-note {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+  line-height: 1.6;
+  margin-top: -4px;
+}
+
+/* ── Terminal-style processing view ─────────────────────────────── */
+.vv-upload-terminal {
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  overflow: hidden;
+}
+
+.vv-upload-terminal__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--vv-surface-2);
+  border-bottom: 1px solid var(--vv-border);
+}
+
+.vv-upload-terminal__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.vv-upload-terminal__dot--r { background: var(--vv-red); opacity: 0.7; }
+.vv-upload-terminal__dot--y { background: var(--vv-amber); opacity: 0.7; }
+.vv-upload-terminal__dot--g { background: var(--vv-green); opacity: 0.7; }
+
+.vv-upload-terminal__title {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-muted);
+  margin-left: 6px;
+}
+
+.vv-upload-terminal__body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vv-upload-terminal__line {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-muted);
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  line-height: 1.5;
+}
+
+.vv-upload-terminal__prompt {
+  color: var(--vv-green);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.vv-upload-terminal__line--stream {
+  color: var(--vv-dim);
+}
+
+.vv-upload-terminal__cipher {
+  color: var(--vv-code);
+  letter-spacing: 0.06em;
+}
+
+.vv-upload-terminal__line--status {
+  color: var(--vv-muted);
+}
+
+/* ── Processing layout ──────────────────────────────────────────── */
+.vv-upload-processing {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vv-upload-processing__file {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 12px 16px;
+}
+
+/* ── Workflow schematic ─────────────────────────────────────────── */
+.vv-upload-workflow {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  padding: 16px 18px;
+}
+
+.vv-upload-workflow__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--vv-border);
+}
+
+.vv-upload-workflow__stages {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vv-upload-workflow__stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--vv-radius-sm);
+  border: 1px solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.vv-upload-workflow__stage--done {
+  border-color: #244d37;
+  background: rgba(23, 63, 43, 0.15);
+}
+
+.vv-upload-workflow__stage--pending {
+  border-color: var(--vv-border);
+  background: var(--vv-surface-3);
+}
+
+.vv-upload-workflow__stage-num {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--vv-dim);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--vv-border);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.vv-upload-workflow__stage--done .vv-upload-workflow__stage-num {
+  color: var(--vv-green);
+  border-color: var(--vv-green);
+}
+
+.vv-upload-workflow__stage--pending .vv-upload-workflow__stage-num {
+  color: var(--vv-amber);
+  border-color: var(--vv-amber);
+}
+
+.vv-upload-workflow__stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.vv-upload-workflow__stage-label {
+  font-family: var(--vv-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.vv-upload-workflow__stage--done .vv-upload-workflow__stage-label {
+  color: var(--vv-green);
+}
+
+.vv-upload-workflow__stage-detail {
+  font-family: var(--vv-font-sans);
+  font-size: 11px;
+  color: var(--vv-dim);
+}
+
+.vv-upload-workflow__note {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+  line-height: 1.6;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vv-border);
+}
+
+/* ── Complete view ──────────────────────────────────────────────── */
+.vv-upload-complete {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Result panel ───────────────────────────────────────────────── */
+.vv-upload-result {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  overflow: hidden;
+}
+
+.vv-upload-result__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--vv-border);
+  background: var(--vv-surface-1);
+}
+
+.vv-upload-result__body {
+  padding: 12px 16px;
+}
+
+/* ── Integrity comparison ───────────────────────────────────────── */
+.vv-upload-integrity {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  padding: 14px 16px;
+}
+
+.vv-upload-integrity__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--vv-border);
+}
+
+.vv-upload-integrity__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vv-upload-integrity__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-upload-integrity__label {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+  letter-spacing: 0.04em;
+}
+
+.vv-upload-integrity__hash {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-code);
+  word-break: break-all;
+  line-height: 1.5;
+  padding: 5px 8px;
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+}
+
+/* ── Shard distribution visualization ───────────────────────────── */
+.vv-shard-dist {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  padding: 16px 18px;
+}
+
+.vv-shard-dist__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--vv-border);
+}
+
+/* Central file block */
+.vv-shard-dist__center {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.vv-shard-dist__file-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-green);
+  border-radius: var(--vv-radius);
+  padding: 10px 18px;
+  box-shadow: 0 0 12px rgba(57, 229, 139, 0.08);
+}
+
+.vv-shard-dist__file-icon {
+  font-size: 20px;
+  color: var(--vv-green);
+  font-family: var(--vv-font-mono);
+}
+
+.vv-shard-dist__file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.vv-shard-dist__file-name {
+  font-family: var(--vv-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vv-text);
+}
+
+.vv-shard-dist__file-tag {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-green);
+  letter-spacing: 0.04em;
+}
+
+/* Animated connection lines */
+.vv-shard-dist__lines {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  height: 28px;
+  margin: 0 10px;
+}
+
+.vv-shard-dist__line {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.vv-shard-dist__line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--vv-green) 0px,
+    var(--vv-green) 3px,
+    transparent 3px,
+    transparent 7px
+  );
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vv-shard-dist__line--animated::after {
+    animation: vv-dash-flow 1.2s linear infinite;
+  }
+}
+
+@keyframes vv-dash-flow {
+  from { background-position: 0 0; }
+  to   { background-position: 0 14px; }
+}
+
+/* Node cards */
+.vv-shard-dist__nodes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.vv-shard-dist__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  background: var(--vv-surface-1);
+  transition: border-color 0.2s;
+}
+
+.vv-shard-dist__node--online {
+  border-color: #244d37;
+}
+
+.vv-shard-dist__node--offline {
+  border-color: #5c2024;
+}
+
+.vv-shard-dist__node--unknown {
+  border-color: var(--vv-border);
+}
+
+.vv-shard-dist__node-name {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--vv-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.vv-shard-dist__node-status {
+  font-family: var(--vv-font-mono);
+  font-size: 9px;
+  color: var(--vv-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vv-shard-dist__node--online .vv-shard-dist__node-status {
+  color: var(--vv-green);
+}
+
+.vv-shard-dist__node--offline .vv-shard-dist__node-status {
+  color: var(--vv-red);
+}
+
+/* Distribution details */
+.vv-shard-dist__details {
+  background: var(--vv-surface-3);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.vv-shard-dist__caveat {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+  line-height: 1.6;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vv-border);
+}
+
+/* Responsive: shard distribution on narrow */
+@media (max-width: 700px) {
+  .vv-shard-dist__nodes {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .vv-shard-dist__lines {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .vv-shard-dist__nodes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vv-shard-dist__lines {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Phase 5 — Files / Vault & Reconstruction
+   ========================================================================== */
+
+.vv-files-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+}
+
+/* ── Operational Stats Strip ────────────────────────────────────── */
+.vv-files-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .vv-files-stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .vv-files-stats-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-files-stat-box {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.vv-files-stat-label {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vv-files-stat-val {
+  font-family: var(--vv-font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.vv-files-stat-sub {
+  font-size: 11px;
+  color: var(--vv-dim);
+  font-family: var(--vv-font-sans);
+}
+
+/* ── Search & Filter Toolbar ────────────────────────────────────── */
+.vv-files-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.vv-files-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 460px;
+  min-width: 240px;
+}
+
+.vv-files-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--vv-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.vv-files-search-input {
+  padding-left: 30px;
+  padding-right: 28px;
+  height: 34px;
+  background: var(--vv-surface-2);
+  border-color: var(--vv-border);
+  font-size: 12px;
+}
+
+.vv-files-search-input:focus {
+  border-color: var(--vv-green);
+  background: var(--vv-surface-1);
+}
+
+.vv-files-search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--vv-muted);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.vv-files-search-clear:hover {
+  color: var(--vv-text);
+}
+
+.vv-files-filter-status {
+  font-family: var(--vv-font-mono);
+  font-size: 12px;
+}
+
+/* ── Technical Loader Strip ─────────────────────────────────────── */
+.vv-files-loader-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border-strong);
+  border-radius: var(--vv-radius-sm);
+  padding: 12px 16px;
+}
+
+.vv-files-loader-code {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-green);
+  letter-spacing: 0.12em;
+  user-select: none;
+}
+
+.vv-files-loader-label {
+  font-family: var(--vv-font-sans);
+  font-size: 12px;
+  color: var(--vv-text);
+}
+
+/* ── Inline Reconstruction Result Panel ─────────────────────────── */
+.vv-files-result-panel {
+  border: 1px solid var(--vv-border-strong);
+  background: var(--vv-surface-2);
+  padding: 18px 20px;
+  animation: vv-fade-in 0.2s ease-out;
+}
+
+@keyframes vv-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vv-files-result-panel {
+    animation: none;
+  }
+}
+
+.vv-files-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--vv-border);
+}
+
+.vv-files-result-title {
+  font-family: var(--vv-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--vv-text);
+}
+
+.vv-files-result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .vv-files-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-files-result-card {
+  background: var(--vv-surface-3);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vv-files-result-section-title {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--vv-muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.vv-files-disclaimer {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+  line-height: 1.5;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vv-border);
+}
+
+/* Outcome badges */
+.vv-files-outcome-badge {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: var(--vv-radius-sm);
+  margin-bottom: 12px;
+}
+
+.vv-files-outcome-badge--ok {
+  background: var(--vv-green-dim);
+  border: 1px solid #244d37;
+  color: var(--vv-green);
+}
+
+.vv-files-outcome-badge--err {
+  background: var(--vv-red-dim);
+  border: 1px solid #5c2024;
+  color: var(--vv-red);
+}
+
+.vv-files-outcome-badge--warn {
+  background: var(--vv-amber-dim);
+  border: 1px solid #4a3800;
+  color: var(--vv-amber);
+}
+
+.vv-files-outcome-icon {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.vv-files-outcome-desc {
+  font-size: 11px;
+  color: var(--vv-text);
+  margin-top: 2px;
+  font-family: var(--vv-font-sans);
+}
+
+/* Hash comparison rows */
+.vv-files-hash-row {
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 8px 12px;
+}
+
+.vv-files-hash-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-muted);
+  margin-bottom: 4px;
+}
+
+.vv-files-hash-code {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  color: var(--vv-code);
+  word-break: break-all;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.vv-files-copy-btn {
+  background: var(--vv-surface-3);
+  border: 1px solid var(--vv-border-strong);
+  border-radius: 3px;
+  color: var(--vv-text);
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.vv-files-copy-btn:hover {
+  color: var(--vv-green);
+  border-color: var(--vv-green);
+}
+
+/* ── Main Files Table ───────────────────────────────────────────── */
+.vv-files-table-wrapper {
+  overflow-x: auto;
+}
+
+.vv-files-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vv-files-table th {
+  background: var(--vv-surface-3);
+  padding: 10px 14px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.vv-files-row {
+  transition: background 0.15s;
+}
+
+.vv-files-row:hover {
+  background: var(--vv-surface-3);
+}
+
+.vv-files-row--active {
+  background: var(--vv-surface-3) !important;
+  border-left: 2px solid var(--vv-green);
+}
+
+.vv-files-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-files-filename {
+  font-family: var(--vv-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vv-text);
+  word-break: break-all;
+}
+
+.vv-files-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vv-files-fileid {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+}
+
+.vv-files-time-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vv-files-time-exact {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-dim);
+}
+
+.vv-files-hash-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.vv-files-mini-copy {
+  background: transparent;
+  border: 1px solid var(--vv-border);
+  border-radius: 3px;
+  color: var(--vv-muted);
+  font-size: 11px;
+  padding: 1px 4px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.vv-files-mini-copy:hover {
+  color: var(--vv-green);
+  border-color: var(--vv-green);
+}
+
+.vv-files-download-btn {
+  white-space: nowrap;
+}
+
+.vv-files-btn-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vv-green);
+  margin-right: 4px;
+  animation: vv-pulse-dot 0.8s infinite alternate;
+}
+
+@keyframes vv-pulse-dot {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vv-files-btn-pulse {
+    animation: none;
+  }
+}
+
+.vv-files-err-row td {
+  padding: 0 14px 10px !important;
+  background: var(--vv-surface-3);
+}
+
+/* ── Empty State ────────────────────────────────────────────────── */
+.vv-files-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.vv-files-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+
+.vv-files-empty-title {
+  font-family: var(--vv-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vv-text);
+}
