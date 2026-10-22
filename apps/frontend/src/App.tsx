@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthScreen } from './components/AuthScreen';
+import { Dashboard } from './pages/Dashboard';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inline — no external package change needed)
@@ -116,114 +117,7 @@ function PhaseStub({ title, phase }: { title: string; phase: number }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Section: Dashboard
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SectionDashboard({
-  nodes,
-  files,
-  onRefreshNodes,
-}: {
-  nodes: StorageNode[];
-  files: FileItem[];
-  onRefreshNodes: () => void;
-}) {
-  const healthyCount = nodes.filter((n) => n.isHealthy).length;
-  const totalCount = nodes.length;
-  const clusterOk = healthyCount === totalCount && totalCount > 0;
-
-  return (
-    <>
-      <div className="vv-section-header">
-        <span className="vv-section-title">Dashboard</span>
-        <span className="vv-section-subtitle">System overview</span>
-      </div>
-
-      <div className="vv-grid-2" style={{ marginBottom: 16, maxWidth: 720 }}>
-        {/* Cluster summary */}
-        <div className="vv-panel">
-          <p className="vv-label" style={{ marginBottom: 10 }}>Storage Cluster</p>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Nodes healthy</span>
-            <span className={`vv-kv-val ${clusterOk ? 'vv-text-green' : 'vv-text-amber'}`}>
-              {healthyCount} / {totalCount}
-            </span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Threshold</span>
-            <span className="vv-kv-val vv-text-code">K=3 / N=5</span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Encryption</span>
-            <span className="vv-kv-val vv-text-code">AES-256-GCM</span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Key splitting</span>
-            <span className="vv-kv-val vv-text-code">Shamir SSS</span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Data encoding</span>
-            <span className="vv-kv-val vv-text-code">Erasure (RS 3-of-5)</span>
-          </div>
-        </div>
-
-        {/* Files summary */}
-        <div className="vv-panel">
-          <p className="vv-label" style={{ marginBottom: 10 }}>Vault</p>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Stored files</span>
-            <span className="vv-kv-val">{files.length}</span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Total plaintext size</span>
-            <span className="vv-kv-val">
-              {files.length > 0 ? fmtBytes(files.reduce((s, f) => s + f.sizeBytes, 0)) : '—'}
-            </span>
-          </div>
-          <div className="vv-kv-row">
-            <span className="vv-kv-key">Most recent upload</span>
-            <span className="vv-kv-val vv-text-muted" style={{ fontSize: 11 }}>
-              {files.length > 0
-                ? new Date(files[files.length - 1].createdAt).toLocaleString()
-                : 'No files yet'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Node mini-matrix */}
-      <div className="vv-panel" style={{ maxWidth: 720, marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <p className="vv-label">Node Status Matrix</p>
-          <button className="vv-btn vv-btn--sm" onClick={onRefreshNodes} aria-label="Refresh node status">
-            ↻ Refresh
-          </button>
-        </div>
-        {nodes.length === 0 ? (
-          <p className="vv-text-muted" style={{ fontSize: 12 }}>Loading node data…</p>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-            {nodes.map((node) => (
-              <div
-                key={node.id}
-                className={`vv-node-card ${node.isHealthy ? 'vv-node-card--online' : 'vv-node-card--offline'}`}
-              >
-                <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span className={`vv-status-dot ${node.isHealthy ? 'vv-status-dot--online' : 'vv-status-dot--offline'}`} />
-                  <span className="vv-mono" style={{ fontSize: 11, color: 'var(--vv-muted)' }}>{node.id}</span>
-                </div>
-                <span className={`vv-badge ${node.isHealthy ? 'vv-badge--online' : 'vv-badge--offline'}`}>
-                  {node.isHealthy ? 'Online' : 'Offline'}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
+// SectionDashboard replaced by Dashboard page component (Phase 3)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Section: Upload
@@ -1101,10 +995,11 @@ export default function App() {
     switch (activeSection) {
       case 'dashboard':
         return (
-          <SectionDashboard
+          <Dashboard
             nodes={nodes}
             files={files}
             onRefreshNodes={fetchNodes}
+            onNavigate={(section) => setActiveSection(section as Parameters<typeof setActiveSection>[0])}
           />
         );
       case 'upload':
