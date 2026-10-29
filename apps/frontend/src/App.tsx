@@ -3,6 +3,12 @@ import { AuthScreen } from './components/AuthScreen';
 import { Dashboard } from './pages/Dashboard';
 import { UploadSection } from './pages/UploadSection';
 import { FilesSection } from './pages/FilesSection';
+import { NodesSection } from './pages/NodesSection';
+import { ActivityTerminal } from './components/ActivityTerminal';
+import { activityLogger } from './utils/activityLogger';
+
+// Initialize transparent client API activity interception
+activityLogger.initFetchInterceptor();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inline — no external package change needed)
@@ -1034,7 +1040,7 @@ export default function App() {
         );
       case 'nodes':
         return (
-          <SectionNodes
+          <NodesSection
             nodes={nodes}
             onRefreshNodes={fetchNodes}
           />
@@ -1145,6 +1151,9 @@ export default function App() {
       <main className="vv-main" role="main" aria-label={activeSection}>
         {renderSection()}
       </main>
+
+      {/* ── Global Activity Terminal (all 8 sections) ─────────────── */}
+      <ActivityTerminal />
     </>
   );
 }
