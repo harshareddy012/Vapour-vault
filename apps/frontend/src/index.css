@@ -3155,3 +3155,545 @@ input[type="range"]::-webkit-slider-thumb {
   text-overflow: ellipsis;
   flex: 1;
 }
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Phase 4: Recovery Lab & Multi-Stage Reconstruction Styles
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.vv-rec-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.vv-rec-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .vv-rec-overview-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .vv-rec-overview-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-rec-stat-card {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-rec-stat-label {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vv-rec-stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vv-rec-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.vv-rec-stat-sub {
+  font-size: 11px;
+  color: var(--vv-muted);
+}
+
+.vv-rec-stat-desc {
+  font-size: 11px;
+  color: var(--vv-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* Dual Recovery Architecture Principle Strip */
+.vv-rec-principles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .vv-rec-principles {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-rec-principle-card {
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vv-rec-principle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vv-rec-principle-tag {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--vv-code);
+  letter-spacing: 0.05em;
+}
+
+.vv-rec-principle-text {
+  font-size: 12px;
+  color: var(--vv-text);
+  line-height: 1.6;
+}
+
+.vv-rec-principle-text strong {
+  color: var(--vv-green);
+}
+
+/* Scenario Controls Panel */
+.vv-rec-controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vv-rec-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.vv-rec-panel-heading {
+  font-family: var(--vv-font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--vv-text);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.vv-rec-file-picker {
+  display: flex;
+  align-items: center;
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 4px 10px;
+}
+
+.vv-rec-select {
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  color: var(--vv-text);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: var(--vv-radius-sm);
+  cursor: pointer;
+}
+
+.vv-rec-scenarios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .vv-rec-scenarios-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-rec-scenario-card {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.vv-rec-scenario-card--active {
+  border-color: var(--vv-green);
+  background: var(--vv-surface-3);
+}
+
+.vv-rec-scenario-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vv-rec-scenario-num {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-muted);
+  letter-spacing: 0.06em;
+}
+
+.vv-rec-scenario-title {
+  font-family: var(--vv-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vv-text);
+  margin: 0;
+}
+
+.vv-rec-scenario-desc {
+  font-size: 12px;
+  color: var(--vv-muted);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.vv-rec-scenario-footer {
+  margin-top: 4px;
+}
+
+/* 5 Storage Node Matrix in Recovery Lab */
+.vv-rec-nodes-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vv-rec-nodes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vv-rec-nodes-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .vv-rec-nodes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .vv-rec-nodes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-rec-node-card {
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.vv-rec-node-card--online {
+  border-color: #244d37;
+}
+
+.vv-rec-node-card--offline {
+  border-color: #5c2024;
+  background: rgba(92, 32, 36, 0.06);
+}
+
+.vv-rec-node-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vv-rec-node-name {
+  font-family: var(--vv-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.vv-rec-node-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-rec-node-card-action {
+  margin-top: 4px;
+}
+
+/* Active running banner */
+.vv-rec-running-banner {
+  border-color: var(--vv-green);
+  background: var(--vv-surface-2);
+  padding: 16px;
+}
+
+.vv-rec-running-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Multi-stage Progress Rail */
+.vv-rec-rail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vv-rec-rail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vv-rec-rail-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vv-rec-stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--vv-radius-sm);
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.vv-rec-stage--completed {
+  border-color: #244d37;
+}
+
+.vv-rec-stage--failed {
+  border-color: #5c2024;
+  background: rgba(92, 32, 36, 0.08);
+}
+
+.vv-rec-stage--running {
+  border-color: var(--vv-amber);
+  background: var(--vv-surface-2);
+}
+
+.vv-rec-stage--unavailable {
+  opacity: 0.6;
+}
+
+.vv-rec-stage-num {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  border: 1px solid var(--vv-border-strong);
+  background: var(--vv-surface-2);
+  color: var(--vv-text);
+  flex-shrink: 0;
+}
+
+.vv-rec-stage--completed .vv-rec-stage-num {
+  border-color: var(--vv-green);
+  color: var(--vv-green);
+  background: var(--vv-green-dim);
+}
+
+.vv-rec-stage--failed .vv-rec-stage-num {
+  border-color: var(--vv-red);
+  color: var(--vv-red);
+  background: var(--vv-red-dim);
+}
+
+.vv-rec-stage--running .vv-rec-stage-num {
+  border-color: var(--vv-amber);
+  color: var(--vv-amber);
+  background: rgba(227, 182, 94, 0.12);
+}
+
+.vv-rec-stage-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-rec-stage-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vv-rec-stage-title {
+  font-family: var(--vv-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.vv-rec-stage-mechanism {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--vv-surface-3);
+  color: var(--vv-code);
+  border: 1px solid var(--vv-border);
+}
+
+.vv-rec-stage-desc {
+  font-size: 12px;
+  color: var(--vv-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.vv-rec-stage-detail {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: var(--vv-surface-2);
+  border-left: 2px solid var(--vv-border-strong);
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+}
+
+.vv-rec-stage-detail--ok {
+  border-left-color: var(--vv-green);
+  color: var(--vv-green);
+}
+
+.vv-rec-stage-detail--err {
+  border-left-color: var(--vv-red);
+  color: var(--vv-red);
+}
+
+.vv-rec-evidence-note {
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--vv-surface-2);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+}
+
+/* Final Outcome Panel */
+.vv-rec-outcome-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vv-rec-outcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vv-rec-outcome-title {
+  font-family: var(--vv-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vv-text);
+}
+
+.vv-rec-outcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 800px) {
+  .vv-rec-outcome-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vv-rec-outcome-card {
+  background: var(--vv-surface-1);
+  border: 1px solid var(--vv-border);
+  border-radius: var(--vv-radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vv-rec-card-title {
+  font-family: var(--vv-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--vv-muted);
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.vv-rec-hash-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vv-rec-hash-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-muted);
+}
+
+.vv-rec-hash-code {
+  font-family: var(--vv-font-mono);
+  font-size: 10px;
+  color: var(--vv-code);
+  background: var(--vv-surface-2);
+  padding: 6px 8px;
+  border-radius: 2px;
+  word-break: break-all;
+  border: 1px solid var(--vv-border);
+}

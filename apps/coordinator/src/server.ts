@@ -11,6 +11,15 @@ import { createServiceLogger } from '@dfs-sss/logger';
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const logger = createServiceLogger('Coordinator');
 
+// Prevent unhandled promise rejections from crashing the process
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error({ reason: reason instanceof Error ? reason.message : String(reason) }, 'Unhandled promise rejection — process will continue');
+});
+
+process.on('uncaughtException', (error: Error) => {
+  logger.fatal({ error: error.message, stack: error.stack }, 'Uncaught exception — process will continue');
+});
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '100mb' }));

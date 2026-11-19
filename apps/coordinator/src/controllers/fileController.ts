@@ -32,28 +32,38 @@ export class FileController {
   }
 
   async listFiles(req: Request, res: Response): Promise<void> {
-    const ownerId = req.user?.userId;
-    if (!ownerId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
+    try {
+      const ownerId = req.user?.userId;
+      if (!ownerId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
 
-    const allRecords = await fileRepository.getAllFileRecords();
-    const fileRecords = allRecords.filter((file) => file.ownerId === ownerId);
-    res.json({ fileRecords, total: fileRecords.length });
+      const allRecords = await fileRepository.getAllFileRecords();
+      const fileRecords = allRecords.filter((file) => file.ownerId === ownerId);
+      res.json({ fileRecords, total: fileRecords.length });
+    } catch (error: any) {
+      logger.error({ error: error.message }, 'Failed to list files — database may be unavailable');
+      res.status(503).json({ error: 'Service temporarily unavailable', detail: 'Database connectivity error' });
+    }
   }
 
   async getFileMetadata(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    try {
+      const { id } = req.params;
 
-    const fileRecord = await fileRepository.getFileRecord(id);
+      const fileRecord = await fileRepository.getFileRecord(id);
 
-    if (!fileRecord || fileRecord.ownerId !== req.user?.userId) {
-      res.status(404).json({ error: 'File not found.' });
-      return;
+      if (!fileRecord || fileRecord.ownerId !== req.user?.userId) {
+        res.status(404).json({ error: 'File not found.' });
+        return;
+      }
+
+      res.json({ fileRecord });
+    } catch (error: any) {
+      logger.error({ error: error.message }, 'Failed to retrieve file metadata — database may be unavailable');
+      res.status(503).json({ error: 'Service temporarily unavailable', detail: 'Database connectivity error' });
     }
-
-    res.json({ fileRecord });
   }
 
   async downloadFile(req: Request, res: Response): Promise<void> {
